@@ -1,0 +1,295 @@
+<html>
+<head>
+	<title>Mario's Adventure</title>
+	<meta charset="UTF-8">
+	
+</head>
+
+<body>
+	<center>
+
+		<h1>Jose's Mario Game</h1> 
+
+	<canvas id="myCanvas"  width="500" height="535" style="border:10px solid #cccccc;"></canvas>
+
+	<h5> <strong id="yes">Controls:</strong> LEFT/RIGHT to move</h5>
+	</center>
+
+<script type="text/javascript">
+
+	let myId = -1;
+	let marioPos = 100;
+	let luigiPos = 400;
+	let ob = {};
+
+
+function httpPost(url, payload, callback)
+{
+	let request = new XMLHttpRequest();
+	request.onreadystatechange = function()
+	{
+		if(request.readyState == 4)
+		{
+			if(request.status == 200)
+			callback(request.responseText);
+			else
+			{
+				if(request.status == 0 && request.statusText.length == 0)
+					alert("Connection failed");
+				else
+					alert("Server returned status " + request.status + ", " + request.statusText);
+			}
+		}
+	};
+	request.open('post', url, true);
+	request.setRequestHeader('Content-Type',
+	'application/x-www-form-urlencoded');
+	request.send(payload);
+}
+
+function cb(response)
+{
+	//alert("The back-end server replied: " + response);
+
+	// Parse the JSON
+	let object = JSON.parse(response);
+	if(ob.id == -1)
+	{
+		myId = object.id;
+	}
+
+	if(ob.id == 1)
+	{
+		luigiPos = object.xPosition;
+	}
+
+	if(ob.id == 2)
+	{
+		marioPos = object.xPosition;
+	}
+
+
+
+	//alert("The server's favorite number is: " + ob.fav_num);
+}
+
+
+function sayhi()
+{
+	// Find the text field
+	let msg = document.getElementById("mymessage");
+
+	// Make a JSON blob
+	let ob = {};
+	ob.message = msg.value;
+	ob.fav_num = 3.14159;
+	let json_string = JSON.stringify(ob);
+
+	// Send the JSON blob to the server
+	httpPost("ajax_handler.html", json_string, cb);
+}
+
+
+function Mario(model)
+{
+	
+	this.model = model;
+	this.x = marioPos;
+		
+}
+	
+	
+
+
+function Luigi(model) 
+{
+	
+	this.model = model;
+	this.x = luigiPos;
+
+}
+
+
+
+
+
+function Model()
+{
+	//adds mario to the game
+	this.mario = new Mario(this);
+
+	//adds luigi to the game
+	this.luigi = new Luigi(this);
+		
+		
+}
+
+	Model.prototype.update = function()
+	{
+
+		ob.id = myId;
+
+		if(ob.id == 1)
+		{
+			ob.xPosition = marioPos;
+
+		}
+
+		else if(ob.id == 2)
+		{
+			ob.xPosition = luigiPos;
+		}
+
+		else
+		{
+			ob.xPosition = 0;
+		}
+
+		//ob.message = "";
+		let json_string = JSON.stringify(ob);
+		httpPost("ajax_handler.html", json_string, cb);
+
+
+
+		//httpPost("ajax_handler.html", json_string, cb);
+	}
+	
+
+
+
+
+function View(model)
+{
+	
+		this.model = model;
+		this.canvas = document.getElementById("myCanvas");
+
+		//mario image
+		this.marioImage = new Image();
+		this.marioImage.src = "mario1.png";
+
+		//luigi image
+		this.luigiImage = new Image();
+		this.luigiImage.src = "luigi.png";
+
+}
+
+	View.prototype.update = function()
+	{
+		let ctx = this.canvas.getContext("2d");
+		
+		
+
+		ctx.clearRect(0, 0, 1000, 500);
+		
+		ctx.drawImage(this.marioImage, marioPos, 200);
+		ctx.drawImage(this.luigiImage, luigiPos, 200);
+
+
+	}
+
+
+function Controller(model, view)
+{
+	
+		this.model = model;
+		this.view = view;
+		this.key_right = false;
+		this.key_left = false;
+		this.key_up = false;
+		this.key_down = false;
+		this.key_space = false;
+		let self = this;
+		document.addEventListener('keydown', function(event) { self.keyDown(event); }, false);
+		document.addEventListener('keyup', function(event) { self.keyUp(event); }, false);
+}
+
+
+	Controller.prototype.keyDown = function(event)
+	{
+		if(event.keyCode == 39) this.key_right = true;
+		else if(event.keyCode == 37) this.key_left = true;
+		else if(event.keyCode == 38) this.key_up = false;
+		else if(event.keyCode == 40) this.key_down = false;
+		else if(event.keyCode == 32) this.key_space = true;
+	}
+
+
+	Controller.prototype.keyUp = function(event)
+	{
+		if(event.keyCode == 39) this.key_right = false;
+		else if(event.keyCode == 37) this.key_left = false;
+		else if(event.keyCode == 38) this.key_up = false;
+		else if(event.keyCode == 40) this.key_down = false;
+		else if(event.keyCode == 32) this.key_space = false;
+	}
+
+	Controller.prototype.update = function()
+	{
+		
+		//Right Key
+		if(this.key_right)
+		{
+			//this.model.mario.goRight();
+			if(myId == 1)
+			{
+				marioPos += 5;
+			}
+
+			else if(myId == 2)
+			{
+				luigiPos += 5;
+			}
+
+		}
+
+		//Left Key
+		if(this.key_left)
+		{
+			//this.model.mario.goLeft();
+			if(myId == 1)
+			{
+				marioPos -= 5;
+			}
+
+			else if(myId == 2)
+			{
+				luigiPos -= 5;
+			}
+
+		}
+
+		//Space Key
+		if(this.key_space) 
+		{
+			//this.model.mario.jump();
+				
+		}
+
+	}
+
+
+function Game()
+{
+		this.model = new Model();
+		this.view = new View(this.model);
+		this.controller = new Controller(this.model, this.view);
+}
+
+	Game.prototype.onTimer = function()
+	{
+		this.controller.update();
+		this.model.update();
+		this.view.update();
+	}
+
+
+let game = new Game();
+let timer = setInterval(function() { game.onTimer(); }, 40);
+
+
+
+</script>
+
+</body>
+</html>

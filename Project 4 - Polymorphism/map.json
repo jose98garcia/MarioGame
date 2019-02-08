@@ -1,0 +1,11 @@
+{"sprites":[{"type":"Mario","x":510,"y":760,"w":60,"h":95},
+{"type":"Brick","x":780,"y":522,"w":101,"h":91},
+{"type":"Brick","x":1348,"y":518,"w":112,"h":96},
+{"type":"CoinBlock","x":100,"y":670,"w":89,"h":83},{"type":"CoinBlock","x":497,"y":617,"w":89,"h":83},{"type":"CoinBlock","x":692,"y":538,"w":89,"h":83},{"type":"CoinBlock","x":871,"y":402,"w":89,"h":83},{"type":"CoinBlock","x":1089,"y":272,"w":89,"h":83},{"type":"CoinBlock","x":1349,"y":209,"w":89,"h":83},{"type":"CoinBlock","x":1572,"y":282,"w":89,"h":83},{"type":"CoinBlock","x":1907,"y":386,"w":89,"h":83},{"type":"CoinBlock","x":2273,"y":483,"w":89,"h":83},{"type":"CoinBlock","x":2616,"y":385,"w":89,"h":83},{"type":"CoinBlock","x":2869,"y":205,"w":89,"h":83},{"type":"CoinBlock","x":3149,"y":363,"w":89,"h":83},
+{"type":"CoinBlock","x":100,"y":670,"w":89,"h":83},{"type":"CoinBlock","x":235,"y":645,"w":89,"h":83},{"type":"CoinBlock","x":3576,"y":538,"w":89,"h":83},{"type":"CoinBlock","x":3778,"y":649,"w":89,"h":83},
+{"type":"Brick","x":2049,"y":542,"w":99,"h":84}]}
+
+
+
+
+

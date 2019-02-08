@@ -1,0 +1,4 @@
+Jose Garcia
+010775671
+
+Python game was ran with Python 3.7 

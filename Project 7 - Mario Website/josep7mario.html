@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Mario's Adventure</title>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<center>
+
+	 <h1>Jose's Mario Game</h1> 
+
+	<canvas id="myCanvas"  width="500" height="535" style="border:10px solid #cccccc;"></canvas>
+
+	<h5> <strong id="yes">Controls:</strong> LEFT/RIGHT to move , SPACE to jump </h5>
+	</center>
+	<script type = "text/javascript">
+
+class Sprite
+{
+	constructor(model)
+	{
+		this.model = model;
+
+		this.x = 0;
+		this.y = 0;
+		this.w = 0;
+		this.h = 0;
+
+
+	}
+
+	isMario() {return false;}
+	isTube() {return false;}
+	isBrick() {return false;}
+	isCoinblock() {return false;}
+	isCoin() {return false;}
+
+}
+
+class Mario extends Sprite
+{
+	constructor(model, x, y)
+	{
+		super(model);
+
+		this.x = x;
+		this.y = y;
+		this.w = 60;
+		this.h = 95;
+
+		this.prevX = 0;
+		this.prevY = 0;
+
+		this.vertVel = 0;
+		this.frameSinceOnGround = 0;
+		this.marioFrame = 0;
+		this.iHitBottom = false;
+
+		//sets mario with his right image
+		this.rightImages = true;
+		this.leftImages = false;
+	
+		//right scrolling mario images
+		this.image1 = new Image();
+		this.image1.src = "mario1.png";
+		this.image2 = new Image();
+		this.image2.src = "mario2.png";
+		this.image3 = new Image();
+		this.image3.src = "mario3.png";
+		this.image4 = new Image();
+		this.image4.src = "mario4.png";
+		this.image5 = new Image();
+		this.image5.src = "mario5.png";
+
+		//left scrolling mario images
+		this.image6 = new Image();
+		this.image6.src = "mariol1.png";
+		this.image7 = new Image();
+		this.image7.src = "mariol2.png";
+		this.image8 = new Image();
+		this.image8.src = "mariol3.png";
+		this.image9 = new Image();
+		this.image9.src = "mariol4.png";
+		this.image10 = new Image();
+		this.image10.src = "mariol5.png";
+
+		//right scrolling mario images array
+		this.marioRightImages = new Array(this.image1, this.image2, this.image3, this.image4, this.image5);
+
+		//left scrolling mario images array
+		this.marioLeftImages = new Array(this.image6, this.image7, this.image8, this.image9, this.image10);
+
+	}
+
+	//overrides sprite method
+	isMario(){return true;}
+
+	//remember last position
+	rememberMe()
+	{
+		this.prevX = this.x;
+		this.prevY = this.y;
+	}
+
+	//jump
+	jump()
+	{
+		if(this.frameSinceOnGround < 4)
+		{
+			this.vertVel += -5;
+		}
+	}
+
+	goRight()
+	{
+		this.model.mario.x += 5;
+		this.rightImages = true;
+		this.leftImages = false;
+	}
+
+	goLeft()
+	{
+		this.model.mario.x -= 5;
+		this.rightImages = false;
+		this.leftImages = true;
+	}
+
+	update()
+	{
+		//scroll position goes with mario
+		this.model.scrollPos = this.x - 75;
+
+		//Gravity
+		this.vertVel += .5;
+		this.y += this.vertVel;
+
+		//Makes ground stop mario from falling
+		if(this.y > 392)
+		{
+			this.y = 392;
+			this.vertVel = 0;
+			this.frameSinceOnGround = 0;
+		}
+
+		this.frameSinceOnGround++;
+
+		this.marioFrame = (Math.trunc(Math.abs(this.model.mario.x)/15)%5);
+
+		//collision detection
+		for(let i = 0; i < this.model.sprites.length; i++)
+		{
+			let s = this.model.sprites[i];
+
+			if(this.doesCollide(s.x, s.y, s.w, s.h))
+			{
+				if(s.isBrick())
+				{
+					this.getOut(s.x, s.y, s.w, s.h);
+				}
+
+				else if(s.isTube())
+				{
+					this.getOut(s.x, s.y, s.w, s.h);
+				}
+
+				else if(s.isCoinblock())
+				{
+					this.getOut(s.x, s.y, s.w, s.h);
+
+					//if mario hits bottom of coinblock
+					if(this.iHitBottom == true)
+					{
+						//block hits incremented
+						s.blockHits++;
+
+						//coin is popped out
+						s.addCoin = true;
+
+						//console.log(s.blockHits);
+						//console.log("Mario hit bottom");
+
+						//boolean is set to false
+						this.iHitBottom = false;
+
+					}
+					
+				}
+			}
+		}
+	}
+	
+
+	draw(ctx)
+	{
+		//right scrolling images
+		if(this.rightImages == true)
+		{
+			ctx.drawImage(this.marioRightImages[this.marioFrame], this.x - this.model.scrollPos, this.y);
+		}
+		
+		//left scrolling images
+		else if(this.leftImages == true)
+		{
+			ctx.drawImage(this.marioLeftImages[this.marioFrame], this.x - this.model.scrollPos, this.y);
+		}	
+	}
+
+	//is mario colliding
+	doesCollide(xx, yy, ww, hh)
+	{
+		if(this.x + this.w <= xx)
+			return false;
+		else if(this.x >= xx + ww)
+			return false;
+		else if(this.y + this.h <= yy)
+			return false;
+		else if (this.y >= yy + hh)
+			return false;
+
+		return true;
+
+	}
+
+	//get mario out collision
+	getOut(xx, yy, ww, hh)
+	{
+		//coming in from left
+		if(this.x + this.w >= xx && this.prevX + this.w <= xx)
+		{
+			this.x = xx - this.w;
+		}
+
+		//coming in from right
+		else if(this.x < xx + ww && this.prevX >= xx + ww)
+		{
+			this.x = xx + ww;
+		}
+
+		//coming in from above
+		else if(this.y + this.h >= yy && this.prevY + this.h <= yy)
+		{
+			this.y = yy - this.h - 1;
+			this.vertVel = 0;
+			this.frameSinceOnGround = 0;
+		}
+
+		//coming in from below
+		else if(this.y < yy + hh && this.prevY >= yy + hh)
+		{
+			this.y = yy + hh;
+			this.vertVel = 0;
+			this.iHitBottom = true; //hit bottom
+		}
+
+	}
+	
+}
+
+class Tube extends Sprite
+{
+	constructor(model, x, y)
+	{
+		super(model);
+
+		this.x = x;
+		this.y = y;
+		this.w = 60;
+		this.h = 100;
+
+		this.image = new Image();
+		this.image.src = "tube.png";
+
+	}
+
+	isTube()
+	{
+		return true;
+	}
+
+	draw(ctx)
+	{
+
+		ctx.drawImage(this.image, this.x - this.model.scrollPos, this.y, this.w, this.h);
+
+	}
+
+	update()
+	{
+
+	}
+}
+
+class Brick extends Sprite
+{
+	constructor(model, x, y)
+	{
+		super(model);
+
+		this.x = x;
+		this.y = y;
+		this.w = 60;
+		this.h = 58;
+
+		this.brickImage = new Image();
+		this.brickImage.src ="brick1.png";
+	}
+
+	//I am a brick
+	isBrick()
+	{
+		return true;
+	}
+
+	draw(ctx)
+	{
+		ctx.drawImage(this.brickImage, this.x - this.model.scrollPos, this.y, this.w, this.h);
+
+	}
+
+	update()
+	{
+
+	}
+
+}
+
+class Coinblock extends Sprite
+{
+	constructor(model, x, y)
+	{
+		super(model);
+
+		this.x = x;
+		this.y = y;
+		this.w = 89;
+		this.h = 83;
+
+		//times hitting the coinblock
+		this.blockHits = 0;
+
+		//adding coin boolean
+		this.addCoin = false;
+
+		//block with coins
+		this.block0 = new Image();
+		this.block0.src ="block0.png";
+
+		//block without coins
+		this.block1 = new Image();
+		this.block1.src = "block1.png";
+
+	}
+
+	//I am a coinblock
+	isCoinblock()
+	{
+		return true;
+	}
+
+	
+	//draws a coin
+	popOutCoin(x, y)
+	{
+		this.randHVel = (Math.random() * 16) - 4;
+		this.coin = new Coin(this.model, x, y, this.randHVel);
+		this.model.sprites.push(this.coin);
+
+	}
+	
+
+	draw(ctx)
+	{
+		//coinblock with coins	
+		ctx.drawImage(this.block0, this.x - this.model.scrollPos, this.y, this.w, this.h);
+		
+		
+		//empty coinblock
+		if(this.blockHits >= 5)
+		{
+			ctx.drawImage(this.block1, this.x - this.model.scrollPos, this.y, this.w, this.h);
+		}
+
+	}
+
+
+	update()
+	{
+		//popping out coins update
+		if(this.addCoin == true)
+		{
+			//pops coins out one at a time for 4 hits
+			if(this.blockHits < 5)
+			{
+			this.popOutCoin(this.x, this.y);
+
+			}
+
+			//all coins popped out on last 5th hit
+			else if(this.blockHits == 5)
+			{
+				for(let i = 0; i < 5; i++)
+				{
+					this.popOutCoin(this.x, this.y);
+				}	
+			}
+
+			this.addCoin = false;
+		}
+	}	
+	
+}
+
+class Coin extends Sprite
+{
+	constructor(model, x, y, hVel)
+	{
+		super(model);
+
+		this.x = x;
+		this.y = y;
+		this.w = 75;
+		this.h = 75;
+
+		this.vertVel = 0;
+		this.horizVel = hVel;
+
+		this.image = new Image();
+		this.image.src = "bitcoin.png";
+	}
+
+	isCoin(){return true;}
+
+	update()
+	{
+
+		//gravity
+		this.vertVel += 2;
+		this.y += this.vertVel;
+
+		//horizontal velocity
+		this.x += this.horizVel;
+
+	}
+
+	draw(ctx)
+	{
+		ctx.drawImage(this.image, this.x - this.model.scrollPos, this.y, this.w, this.h);
+
+		//console.log("Im being drawm");
+
+	}
+
+}
+
+class Model
+{
+
+	constructor()
+	{
+		this.scrollPos = 0; //scrolling
+
+		this.sprites = []; // array for sprites
+
+		//adds mario to the game
+		this.mario = new Mario(this, 100, 0);
+		this.sprites.push(this.mario);
+
+		//adds tubes
+		this.tube1 = new Tube(this, 50, 450);
+		this.sprites.push(this.tube1);
+		this.tube2 = new Tube(this, 400, 490);
+		this.sprites.push(this.tube2);
+		this.tube3 = new Tube(this, 650, 470);
+		this.sprites.push(this.tube3);
+
+		//adds bricks
+		this.brick1 = new Brick(this, 200, 300);
+		this.sprites.push(this.brick1);
+		this.brick2 = new Brick(this, 260, 300);
+		this.sprites.push(this.brick2);
+		this.brick3 = new Brick(this, 320, 300);
+		this.sprites.push(this.brick3);
+		this.brick4 = new Brick(this, 500, 400);
+		this.sprites.push(this.brick4);
+		this.brick5 = new Brick(this, 800, 425);
+		this.sprites.push(this.brick5);
+		this.brick6 = new Brick(this, 860, 387);
+		this.sprites.push(this.brick6);
+		this.brick7 = new Brick(this, 920, 349);
+		this.sprites.push(this.brick7);
+		this.brick8 = new Brick(this, 980, 387);
+		this.sprites.push(this.brick8);
+		this.brick9 = new Brick(this, 1040, 425);
+		this.sprites.push(this.brick9);
+
+		//adds coinblocks
+		this.block1 = new Coinblock(this, 245, 50);
+		this.sprites.push(this.block1);
+		this.block2 = new Coinblock(this, 485, 150);
+		this.sprites.push(this.block2);
+		this.block3 = new Coinblock(this, 650, 200);
+		this.sprites.push(this.block3);
+		this.block4 = new Coinblock(this, 850, 150);
+		this.sprites.push(this.block4);
+		
+	}
+
+	update()
+	{
+		for(let i = 0; i < this.sprites.length; i++)
+		{
+			this.sprites[i].update();
+		}
+	}
+	
+}
+
+class View
+{
+	constructor(model)
+	{
+		this.model = model;
+		this.canvas = document.getElementById("myCanvas");
+
+		//background image
+		this.wallpaper = new Image();
+		this.wallpaper.src = "wallpaper2.jpg";
+
+	}
+
+	update()
+	{
+		let ctx = this.canvas.getContext("2d");
+		ctx.clearRect(0, 0, 1000, 500);
+
+		//draws background image
+		ctx.drawImage(this.wallpaper, 0 - (this.model.scrollPos / 5), 0 , 900, 550);
+
+		for(let i = 0; i < this.model.sprites.length; i++)
+		{
+			let sprite = this.model.sprites[i];
+			sprite.draw(ctx);
+			//ctx.drawImage(sprite.image, sprite.x, sprite.y);
+		}
+
+
+	}
+}
+
+class Controller
+{
+	constructor(model, view)
+	{
+		this.model = model;
+		this.view = view;
+		this.key_right = false;
+		this.key_left = false;
+		this.key_up = false;
+		this.key_down = false;
+		this.key_space = false;
+		let self = this;
+		//view.canvas.addEventListener("click", function(event) { self.onClick(event); });
+		document.addEventListener('keydown', function(event) { self.keyDown(event); }, false);
+		document.addEventListener('keyup', function(event) { self.keyUp(event); }, false);
+	}
+
+	/*
+	onClick(event)
+	{
+		this.model.onclick(event.pageX - this.view.canvas.offsetLeft, event.pageY - this.view.canvas.offsetTop);
+
+	}
+	*/
+
+	keyDown(event)
+	{
+		if(event.keyCode == 39) this.key_right = true;
+		else if(event.keyCode == 37) this.key_left = true;
+		else if(event.keyCode == 38) this.key_up = false;
+		else if(event.keyCode == 40) this.key_down = false;
+		else if(event.keyCode == 32) this.key_space = true;
+	}
+
+
+	keyUp(event)
+	{
+		if(event.keyCode == 39) this.key_right = false;
+		else if(event.keyCode == 37) this.key_left = false;
+		else if(event.keyCode == 38) this.key_up = false;
+		else if(event.keyCode == 40) this.key_down = false;
+		else if(event.keyCode == 32) this.key_space = false;
+	}
+
+	update()
+	{
+		this.model.mario.rememberMe();
+		
+		//Right Key
+		if(this.key_right)
+		{
+			this.model.mario.goRight();
+
+		}
+
+		//Left Key
+		if(this.key_left)
+		{
+			this.model.mario.goLeft();
+
+		}
+
+		//Space Key
+		if(this.key_space) 
+		{
+			this.model.mario.jump();
+				
+		}
+
+	}
+}
+
+class Game
+{
+	constructor()
+	{
+		this.model = new Model();
+		this.view = new View(this.model);
+		this.controller = new Controller(this.model, this.view);
+	}
+
+	onTimer()
+	{
+		this.controller.update();
+		this.model.update();
+		this.view.update();
+	}
+}
+
+let game = new Game();
+let timer = setInterval(function() { game.onTimer(); }, 40);
+
+</script>
+
+</body>
+</html>
